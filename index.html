@@ -2,41 +2,53 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Verificación de Contrato</title>
   <style>
-    body { font-family: Arial, sans-serif; text-align: center; padding: 40px 20px; background: #f4f4f4; }
+    body { font-family: Arial, sans-serif; text-align: center; padding: 40px 20px; background: #f4f4f4; margin: 0; }
     .card { background: white; max-width: 400px; margin: auto; padding: 30px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
     .valido { color: #1a7f37; }
     .invalido { color: #c0392b; }
-    a.boton { display: inline-block; margin-top: 15px; padding: 10px 20px; background: #0a66c2; color: white; text-decoration: none; border-radius: 6px; }
+    .sindatos { color: #b7791f; }
+    p { text-align: left; margin: 8px 0; }
+    .cargando { color: #666; }
   </style>
 </head>
 <body>
-<div class="card" id="resultado">MINERCON</div>
+<div class="card" id="resultado"><p class="cargando">Cargando datos del contrato...</p></div>
   <script>
+    const URL_API = 'https://script.google.com/macros/s/AKfycbyq2NCOCzDvu5cTTpyJnbGP94WRMop-f1TKZm6bQE7VO_9qnJXAkbwoTmIwOA2h1oQDkg/exec';
+
     const params = new URLSearchParams(window.location.search);
     const id = params.get('id');
+    const div = document.getElementById('resultado');
 
-    fetch('datos.json')
-      .then(res => res.json())
-      .then(contratos => {
-        const contrato = contratos.find(c => c.id === id);
-        const div = document.getElementById('resultado');
-       if (contrato) {
-  div.innerHTML = `
-    <h2 class="valido">✔ Contrato válido</h2>
-    <p><b>ID:</b> ${contrato.id}</p>
-    <p><b>Cliente:</b> ${contrato.cliente}</p>
-    <p><b>Fecha:</b> ${contrato.fecha}</p>
-    <p><b>Estado:</b> ${contrato.estado}</p>
-  `;
-} else {
-          div.innerHTML = `<h2 class="invalido">✘ Contrato no encontrado</h2>`;
-        }
-      })
-      .catch(() => {
-        document.getElementById('resultado').innerHTML = "<p>Error al cargar los datos.</p>";
-      });
+    if (!id) {
+      div.innerHTML = `<h2 class="invalido">✘ Falta el parámetro "id" en la URL</h2>`;
+    } else {
+      fetch(`${URL_API}?id=${encodeURIComponent(id)}`)
+        .then(res => res.json())
+        .then(contrato => {
+          if (contrato) {
+            const estadoClass = contrato.estado === 'Vigente' ? 'valido'
+                               : contrato.estado === 'Sin datos' ? 'sindatos'
+                               : 'invalido';
+            div.innerHTML = `
+              <h2 class="${estadoClass}">Contrato: ${contrato.numero}</h2>
+              <p><b>Operador Minero:</b> ${contrato.operador}</p>
+              <p><b>Fecha Inicio:</b> ${contrato.fechaInicio}</p>
+              <p><b>Fecha Vencimiento:</b> ${contrato.fechaVencimiento}</p>
+              <p><b>Duración:</b> ${contrato.duracion}</p>
+              <p><b>Estado:</b> ${contrato.estado}</p>
+            `;
+          } else {
+            div.innerHTML = `<h2 class="invalido">✘ Contrato no encontrado</h2>`;
+          }
+        })
+        .catch(() => {
+          div.innerHTML = "<p>Error al cargar los datos. Verifica tu conexión a internet.</p>";
+        });
+    }
   </script>
 </body>
 </html>
