@@ -5,23 +5,88 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Verificación de Contrato</title>
   <style>
-    body { font-family: Arial, sans-serif; text-align: center; padding: 40px 20px; background: #f4f4f4; margin: 0; }
-    .card { background: white; max-width: 400px; margin: auto; padding: 30px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-    .valido { color: #1a7f37; }
-    .invalido { color: #c0392b; }
-    .sindatos { color: #b7791f; }
-    p { text-align: left; margin: 8px 0; }
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 40px 20px;
+      background: #f4f4f4;
+      margin: 0;
+    }
+    .logo {
+      max-width: 160px;
+      max-height: 100px;
+      margin-bottom: 20px;
+    }
+    .card {
+      background: white;
+      max-width: 400px;
+      margin: auto;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    h2 {
+      margin-top: 0;
+      color: #1a1a1a;
+    }
+    p {
+      text-align: left;
+      margin: 8px 0;
+      color: #333;
+    }
     .cargando { color: #666; }
+
+    /* Badge de estado */
+    .badge {
+      display: inline-block;
+      padding: 8px 20px;
+      border-radius: 20px;
+      font-weight: bold;
+      font-size: 16px;
+      margin: 10px 0 20px 0;
+    }
+    .badge-vigente {
+      background: #d4f7dc;
+      color: #1a7f37;
+      border: 2px solid #1a7f37;
+    }
+    .badge-vencido {
+      background: #fbdcd9;
+      color: #c0392b;
+      border: 2px solid #c0392b;
+    }
+    .badge-sindatos {
+      background: #fdf0d5;
+      color: #b7791f;
+      border: 2px solid #b7791f;
+    }
+    .invalido { color: #c0392b; }
   </style>
 </head>
 <body>
-<div class="card" id="resultado"><p class="cargando">Cargando datos del contrato...</p></div>
+
+  <img class="logo" src="logo.png" alt="Logo Minercon">
+
+  <div class="card" id="resultado"><p class="cargando">Cargando datos del contrato...</p></div>
+
   <script>
     const URL_API = 'https://script.google.com/macros/s/AKfycbyq2NCOCzDvu5cTTpyJnbGP94WRMop-f1TKZm6bQE7VO_9qnJXAkbwoTmIwOA2h1oQDkg/exec';
 
     const params = new URLSearchParams(window.location.search);
     const id = params.get('id');
     const div = document.getElementById('resultado');
+
+    function badgeClase(estado) {
+      if (estado === 'Vigente') return 'badge-vigente';
+      if (estado === 'Sin datos') return 'badge-sindatos';
+      return 'badge-vencido';
+    }
+
+    function badgeTexto(estado) {
+      if (estado === 'Vigente') return '✔ VIGENTE';
+      if (estado === 'Sin datos') return '⚠ SIN DATOS';
+      return '✘ ' + estado.toUpperCase();
+    }
 
     if (!id) {
       div.innerHTML = `<h2 class="invalido">✘ Falta el parámetro "id" en la URL</h2>`;
@@ -30,16 +95,13 @@
         .then(res => res.json())
         .then(contrato => {
           if (contrato) {
-            const estadoClass = contrato.estado === 'Vigente' ? 'valido'
-                               : contrato.estado === 'Sin datos' ? 'sindatos'
-                               : 'invalido';
             div.innerHTML = `
-              <h2 class="${estadoClass}">Contrato: ${contrato.numero}</h2>
+              <h2>Contrato: ${contrato.numero}</h2>
+              <div class="badge ${badgeClase(contrato.estado)}">${badgeTexto(contrato.estado)}</div>
               <p><b>Operador Minero:</b> ${contrato.operador}</p>
               <p><b>Fecha Inicio:</b> ${contrato.fechaInicio}</p>
               <p><b>Fecha Vencimiento:</b> ${contrato.fechaVencimiento}</p>
               <p><b>Duración:</b> ${contrato.duracion}</p>
-              <p><b>Estado:</b> ${contrato.estado}</p>
             `;
           } else {
             div.innerHTML = `<h2 class="invalido">✘ Contrato no encontrado</h2>`;
